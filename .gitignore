@@ -1,0 +1,8 @@
+obj/
+ft_malcolm
+*.o
+*.a
+*.dSYM/
+*.pdf
+42checklist/
+.DS_Store
