@@ -42,7 +42,7 @@ void	setup_signals(void)
 {
 	struct sigaction	sa;
 
-	memset(&sa, 0, sizeof(sa));
+	ft_memset(&sa, 0, sizeof(sa));
 	sa.sa_handler = handle_sigint;
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = 0;
@@ -51,7 +51,7 @@ void	setup_signals(void)
 
 int	main(int argc, char **argv)
 {
-	memset(&g_malcolm, 0, sizeof(g_malcolm));
+	ft_memset(&g_malcolm, 0, sizeof(g_malcolm));
 	g_malcolm.sockfd = -1;
 	if (parse_arguments(argc, argv) != 0)
 		return (EXIT_FAILURE);

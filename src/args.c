@@ -17,6 +17,7 @@ static int	parse_decimal_ip(const char *str, struct in_addr *out)
 {
 	unsigned long	value;
 	const char		*p;
+	uint8_t			*dst;
 
 	p = str;
 	if (*p == '\0')
@@ -31,7 +32,13 @@ static int	parse_decimal_ip(const char *str, struct in_addr *out)
 			return (-1);
 		p++;
 	}
-	out->s_addr = htonl((uint32_t)value);
+	/* Write the 4 bytes in network (big-endian) order by hand, so we do   */
+	/* not depend on htonl and the result is correct on any host endianness.*/
+	dst = (uint8_t *)&out->s_addr;
+	dst[0] = (uint8_t)((value >> 24) & 0xFF);
+	dst[1] = (uint8_t)((value >> 16) & 0xFF);
+	dst[2] = (uint8_t)((value >> 8) & 0xFF);
+	dst[3] = (uint8_t)(value & 0xFF);
 	return (0);
 }
 
@@ -53,7 +60,7 @@ int	parse_ip(const char *str, struct in_addr *out, const char *label)
 		return (0);
 	if (parse_decimal_ip(str, out) == 0)
 		return (0);
-	memset(&hints, 0, sizeof(hints));
+	ft_memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_DGRAM;
 	if (getaddrinfo(str, NULL, &hints, &res) == 0 && res != NULL)
@@ -159,6 +166,17 @@ static int	parse_interval(const char *str, unsigned int *out)
 }
 
 /*
+** Exact string equality using only libft: ft_strncmp over the flag length
+** plus its terminating '\0', so "-v" does not match "-verbose" and vice
+** versa. (The bundled ft_strcmp is avoided: it compares pointers, not
+** characters, so it is unreliable.)
+*/
+static int	flag_eq(const char *a, const char *flag)
+{
+	return (ft_strncmp(a, flag, ft_strlen(flag) + 1) == 0);
+}
+
+/*
 ** Recognise one optional flag at argv[*i]. Flags that take a value consume
 ** the next argv slot by advancing *i. Returns 1 if a flag was handled,
 ** 0 if argv[*i] is not a flag, -1 on a flag error (message already printed).
@@ -168,18 +186,18 @@ static int	handle_flag(char **argv, int argc, int *i)
 	char	*a;
 
 	a = argv[*i];
-	if (!strcmp(a, "-v") || !strcmp(a, "--verbose"))
+	if (flag_eq(a, "-v") || flag_eq(a, "--verbose"))
 		return (g_malcolm.verbose = 1, 1);
-	if (!strcmp(a, "-r") || !strcmp(a, "--repeat"))
+	if (flag_eq(a, "-r") || flag_eq(a, "--repeat"))
 		return (g_malcolm.repeat = 1, 1);
-	if (!strcmp(a, "-i") || !strcmp(a, "--interface"))
+	if (flag_eq(a, "-i") || flag_eq(a, "--interface"))
 	{
 		if (++(*i) >= argc)
 			return (usage(), -1);
-		strncpy(g_malcolm.forced_iface, argv[*i], IFNAMSIZ - 1);
+		ft_strlcpy(g_malcolm.forced_iface, argv[*i], IFNAMSIZ);
 		return (g_malcolm.has_forced_iface = 1, 1);
 	}
-	if (!strcmp(a, "--interval"))
+	if (flag_eq(a, "--interval"))
 	{
 		if (++(*i) >= argc || parse_interval(argv[*i], &g_malcolm.interval))
 			return (-1);

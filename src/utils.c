@@ -51,7 +51,7 @@ void	print_hex_dump(const char *title, const uint8_t *data, size_t len)
 		j = 0;
 		while (j < 16 && i + j < len)
 		{
-			if (isprint(data[i + j]))
+			if (ft_isprint(data[i + j]))
 				printf("%c", data[i + j]);
 			else
 				printf(".");

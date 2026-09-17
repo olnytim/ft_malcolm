@@ -19,9 +19,9 @@ static int	is_target_request(const t_arp_frame *arp)
 		return (0);
 	if (arp->oper != htons(ARPOP_REQUEST))
 		return (0);
-	if (memcmp(arp->spa, &g_malcolm.tgt_ip, IPV4_LEN) != 0)
+	if (ft_memcmp(arp->spa, &g_malcolm.tgt_ip, IPV4_LEN) != 0)
 		return (0);
-	if (memcmp(arp->tpa, &g_malcolm.src_ip, IPV4_LEN) != 0)
+	if (ft_memcmp(arp->tpa, &g_malcolm.src_ip, IPV4_LEN) != 0)
 		return (0);
 	return (1);
 }
@@ -77,19 +77,19 @@ int	wait_for_request(void)
 /* Fill the ARP reply frame with the spoofed source identity. */
 static void	build_reply(t_arp_frame *arp)
 {
-	memset(arp, 0, sizeof(*arp));
-	memcpy(arp->eth_dst, g_malcolm.tgt_mac, MAC_LEN);
-	memcpy(arp->eth_src, g_malcolm.src_mac, MAC_LEN);
+	ft_memset(arp, 0, sizeof(*arp));
+	ft_memcpy(arp->eth_dst, g_malcolm.tgt_mac, MAC_LEN);
+	ft_memcpy(arp->eth_src, g_malcolm.src_mac, MAC_LEN);
 	arp->eth_type = htons(ETH_P_ARP);
 	arp->htype = htons(ARPHRD_ETHER);
 	arp->ptype = htons(ETH_P_IP);
 	arp->hlen = MAC_LEN;
 	arp->plen = IPV4_LEN;
 	arp->oper = htons(ARPOP_REPLY);
-	memcpy(arp->sha, g_malcolm.src_mac, MAC_LEN);
-	memcpy(arp->spa, &g_malcolm.src_ip, IPV4_LEN);
-	memcpy(arp->tha, g_malcolm.tgt_mac, MAC_LEN);
-	memcpy(arp->tpa, &g_malcolm.tgt_ip, IPV4_LEN);
+	ft_memcpy(arp->sha, g_malcolm.src_mac, MAC_LEN);
+	ft_memcpy(arp->spa, &g_malcolm.src_ip, IPV4_LEN);
+	ft_memcpy(arp->tha, g_malcolm.tgt_mac, MAC_LEN);
+	ft_memcpy(arp->tpa, &g_malcolm.tgt_ip, IPV4_LEN);
 }
 
 /*
@@ -102,12 +102,12 @@ static int	raw_send(void)
 	struct sockaddr_ll	dst;
 
 	build_reply(&reply);
-	memset(&dst, 0, sizeof(dst));
+	ft_memset(&dst, 0, sizeof(dst));
 	dst.sll_family = AF_PACKET;
 	dst.sll_protocol = htons(ETH_P_ARP);
 	dst.sll_ifindex = g_malcolm.ifindex;
 	dst.sll_halen = MAC_LEN;
-	memcpy(dst.sll_addr, g_malcolm.tgt_mac, MAC_LEN);
+	ft_memcpy(dst.sll_addr, g_malcolm.tgt_mac, MAC_LEN);
 	if (g_malcolm.verbose)
 		print_hex_dump("Sending ARP reply", (const uint8_t *)&reply,
 			sizeof(reply));

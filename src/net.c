@@ -19,7 +19,8 @@ static int	is_usable(struct ifaddrs *ifa)
 	/* Bonus: if the user forced an interface with -i, match it by name    */
 	/* and skip the loopback/up/running heuristics (their explicit choice).*/
 	if (g_malcolm.has_forced_iface)
-		return (!strcmp(ifa->ifa_name, g_malcolm.forced_iface));
+		return (ft_strncmp(ifa->ifa_name, g_malcolm.forced_iface,
+				ft_strlen(g_malcolm.forced_iface) + 1) == 0);
 	if (ifa->ifa_flags & IFF_LOOPBACK)
 		return (0);
 	if (!(ifa->ifa_flags & IFF_UP) || !(ifa->ifa_flags & IFF_RUNNING))
@@ -46,9 +47,9 @@ int	find_interface(void)
 		if (is_usable(ifa))
 		{
 			sll = (struct sockaddr_ll *)ifa->ifa_addr;
-			strncpy(g_malcolm.ifname, ifa->ifa_name, IFNAMSIZ - 1);
+			ft_strlcpy(g_malcolm.ifname, ifa->ifa_name, IFNAMSIZ);
 			g_malcolm.ifindex = if_nametoindex(ifa->ifa_name);
-			memcpy(g_malcolm.if_mac, sll->sll_addr, MAC_LEN);
+			ft_memcpy(g_malcolm.if_mac, sll->sll_addr, MAC_LEN);
 			freeifaddrs(list);
 			printf("Found available interface: %s\n", g_malcolm.ifname);
 			fflush(stdout);
@@ -61,22 +62,16 @@ int	find_interface(void)
 }
 
 /*
-** Create a raw packet socket that only receives ARP frames
-** (protocol filter htons(ETH_P_ARP)) and bind it to our interface, so
-** recvfrom() and sendto() both operate on that link.
+** Create a raw packet socket that only receives ARP frames: the protocol
+** filter htons(ETH_P_ARP) makes the kernel hand us Ethernet frames whose
+** type is ARP and nothing else. We do not bind the socket; sending is
+** directed by the sll_ifindex we set in sendto(), and incoming frames are
+** filtered by content in wait_for_request().
 */
 int	open_socket(void)
 {
-	struct sockaddr_ll	sll;
-
 	g_malcolm.sockfd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ARP));
 	if (g_malcolm.sockfd < 0)
-		return (error_msg(strerror(errno), NULL));
-	memset(&sll, 0, sizeof(sll));
-	sll.sll_family = AF_PACKET;
-	sll.sll_protocol = htons(ETH_P_ARP);
-	sll.sll_ifindex = g_malcolm.ifindex;
-	if (bind(g_malcolm.sockfd, (struct sockaddr *)&sll, sizeof(sll)) < 0)
 		return (error_msg(strerror(errno), NULL));
 	return (0);
 }

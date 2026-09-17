@@ -16,12 +16,10 @@
 # include <unistd.h>
 # include <errno.h>
 # include <signal.h>
-# include <ctype.h>
 # include <netdb.h>
 # include <arpa/inet.h>
 # include <sys/socket.h>
 # include <sys/types.h>
-# include <sys/ioctl.h>
 # include <ifaddrs.h>
 # include <net/if.h>
 # include <netinet/in.h>
